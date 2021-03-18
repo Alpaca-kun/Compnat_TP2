@@ -4,7 +4,7 @@ import math
 import random
 
 # Global constants
-alpha = 0.2
+alpha = 0.8
 beta = 1 - alpha
 cycles = 100
 evaporation_rate = 0.7 # ρ
@@ -213,7 +213,8 @@ for cycle in range(cycles):
     # After all ants visited the graph, reset the cumulative pheromone of graph S
     for u, v, weight in S.edges(data="weight"):
         if weight is not None:
-            S[u][v]['weight'] = 0.0
+            # S[u][v]['weight'] = 0.0
+            S[u][v]['weight'] = G[u][v]['weight']
 
 
 print(min(ants_solution))
