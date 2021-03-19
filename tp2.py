@@ -168,14 +168,16 @@ for cycle in range(cycles):
             # print("next node idx: " + str(next_node))
 
             # Update makespan and pheromone in graph S
-            S.nodes[next_node]['makespan'] = G.nodes[next_node]['makespan'] + S.nodes[actual_node]['makespan']
+            # S.nodes[next_node]['makespan'] = G.nodes[next_node]['makespan'] + S.nodes[actual_node]['makespan']
+            S.nodes[next_node]['makespan'] = \
+            max(S.nodes[next_node]['makespan'], G.nodes[next_node]['makespan'] + S.nodes[actual_node]['makespan'])
             S[actual_node][next_node]['weight'] += (1 / S.nodes[next_node]['makespan']) # 1 / cumulative makespan
             # print("Previous G node: " + str(G.nodes[next_node]['makespan']))
             # print("Actual S graph cumulative makespan: " + str(S.nodes[next_node]['makespan']))
             # print("Actual S graph cumulative pheremone: " + str(S[actual_node][next_node]['weight']))
 
             # Store the makespan (solution) acquired for each ant
-            ants_solution[a] = max(ants_solution[a], S.nodes[next_node]['makespan'])
+            ants_solution[a] = S.nodes[next_node]['makespan']
 
             # Update the initial variables for next step to find the forward path
             actual_node = next_node
@@ -217,7 +219,8 @@ for cycle in range(cycles):
             S[u][v]['weight'] = G[u][v]['weight']
 
 
-print(min(ants_solution))
+# print(min(ants_solution))
+print(ants_solution)
 
 # G['0_0']['1_1']['weight'] = 100
 # print(G['0_0']['0_1']['weight']) # Start, end, weight between start and end
