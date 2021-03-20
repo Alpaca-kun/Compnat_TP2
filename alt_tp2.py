@@ -6,7 +6,7 @@ import random
 # Global constants
 alpha = 0.5
 beta = 1 - alpha
-cycles = 10
+cycles = 100
 initial_pheromone = 1.0
 evaporation_rate = 0.7 # ρ
 
@@ -23,7 +23,7 @@ def calculate_distance(i, j):
     x2, y2 = decode_idx_to_int(j)
 
     distance = math.sqrt( (x1 - x2) ** 2 + (y1 - y2) ** 2) 
-    print("distance i j: " + str(distance) + " " + str(i) + " " + str(j))
+    # print("distance i j: " + str(distance) + " " + str(i) + " " + str(j))
     return distance
 
 
@@ -36,9 +36,6 @@ def tao_eta_ij(i, j):
         SupportGraph.add_edge(i, j, weight=0.0)
         pheromone_ij = 1.0
     pheromone_ij = pow(pheromone_ij, alpha)
-
-    x1, y1 = decode_idx_to_int(i)
-    x2, y2 = decode_idx_to_int(j)
 
     # η_ij: 1 / distance of i to j - etal
     desirability_ij = 1 / calculate_distance(i, j)
@@ -73,8 +70,8 @@ for j in range(n):
         conflicted_job_machine[int(required_machine[i])].append(str(j + 1) + "_" + str(i + 1))
 
 # ---------- Initializing the graph ----------
-MainGraph = nx.DiGraph() # Main graph
-SupportGraph = nx.DiGraph() # Support graph
+MainGraph = nx.Graph() # Main graph
+SupportGraph = nx.Graph() # Support graph
 DirectedGraph = nx.DiGraph() # Graph with only directioned links
 
 # Construct a graph based in positions of Job x Machine, like the Table 1 of the article
@@ -150,9 +147,9 @@ for cycle in range(cycles):
         visited_nodes = []
         visited_nodes.append(actual_node)
 
-        for n in neighbors_of_actual_node:
-            if MainGraph.nodes[n]['visited'] == False:
-                candidate_nodes_to_visit.append(n)
+        for nei in neighbors_of_actual_node:
+            if MainGraph.nodes[nei]['visited'] == False:
+                candidate_nodes_to_visit.append(nei)
         
         len_candidate = len(candidate_nodes_to_visit)
 
@@ -162,9 +159,9 @@ for cycle in range(cycles):
             probability_for_each_node = [0.0] * len_candidate
             sum_tabu = 0.0
 
-            print("actual node: " + str(actual_node))
-            print("candidate nodes: ")
-            print(candidate_nodes_to_visit)
+            # print("actual node: " + str(actual_node))
+            # print("candidate nodes: ")
+            # print(candidate_nodes_to_visit)
 
             for c in range(len_candidate):                
                 sum_tabu += tao_eta_ij(actual_node, candidate_nodes_to_visit[c])
@@ -202,8 +199,8 @@ for cycle in range(cycles):
             # print("next node idx: " + str(next_node))
 
             # Update makespan and pheromone in graph S
-            # SupportGraph.nodes[next_node]['makespan'] = MainGraph.nodes[next_node]['makespan'] + SupportGraph.nodes[actual_node]['makespan']
-            # SupportGraph[actual_node][next_node]['weight'] += (1 / SupportGraph.nodes[next_node]['makespan']) # 1 / cumulative makespan
+            SupportGraph.nodes[next_node]['makespan'] = MainGraph.nodes[next_node]['makespan'] + SupportGraph.nodes[actual_node]['makespan']
+            SupportGraph[actual_node][next_node]['weight'] += (1 / SupportGraph.nodes[next_node]['makespan']) # 1 / cumulative makespan
             # print("Previous G node: " + str(MainGraph.nodes[next_node]['makespan']))
             # print("Actual S graph cumulative makespan: " + str(SupportGraph.nodes[next_node]['makespan']))
             # print("Actual S graph cumulative pheremone: " + str(SupportGraph[actual_node][next_node]['weight']))
@@ -220,39 +217,42 @@ for cycle in range(cycles):
             candidate_nodes_to_visit.remove(actual_node) # tabu nodes
             visited_nodes.append(actual_node)
 
-            for n in neighbors_of_actual_node:
-                if MainGraph.nodes[n]['visited'] == False:
-                    candidate_nodes_to_visit.append(n)
+            for nei in neighbors_of_actual_node:
+                if MainGraph.nodes[nei]['visited'] == False:
+                    candidate_nodes_to_visit.append(nei)
             
             # print(candidate_nodes_to_visit)
             len_candidate = len(candidate_nodes_to_visit)
 
-        print("Order for visited nodes: " + str(visited_nodes))
+        # print("Order for visited nodes: " + str(visited_nodes))
+
+        # Edge relaxition
+        for node_label, makespan in MainGraph.nodes(data="makespan"):
+            if makespan is not None:
+                # print("makespan " + str(makespan))
+                neighbors_of_actual_node = list(MainGraph.adj[node_label])
+                index_of_node_label = visited_nodes.index(node_label)
+                # print("node label and idx :" + str(node_label) + " " + str(index_of_node_label))
+
+                for nei in neighbors_of_actual_node:
+                    index_of_neighbor = neighbors_of_actual_node.index(nei)
+                    # Relax the edge if node_label has topological priority
+                    if index_of_node_label < index_of_neighbor:
+                        # print(SupportGraph.nodes[node_label]['makespan'])
+                        # sum_makespan = MainGraph.nodes[n]['makespan'] + MainGraph.nodes[node_label]['makespan']
+                        sum_makespan = MainGraph.nodes[nei]['makespan'] + makespan
+                        if MainGraph.nodes[nei]['makespan'] < sum_makespan:
+                            SupportGraph.nodes[nei]['makespan'] = sum_makespan
+                        else:
+                            SupportGraph.nodes[nei]['makespan'] = MainGraph.nodes[nei]['makespan']
 
 
-        # for v in visited_nodes:
-        #     # print(v)
-        #     auxGraph.nodes[v]['visited'] = True
+        # print(str(n) + "_" + str(1))
+        for machine in range(m):
+            label = str(n) + "_" + str(machine + 1)
+            ants_solution[a] += SupportGraph.nodes[label]['makespan']
 
-        #     if v == "0_0":
-        #         AntGraph.add_edge("0_0", visited_nodes[1])
-        #     else:
-        #         # List non-visited neighbors
-        #         neighbors_of_actual_node = list(auxGraph.adj[v]) # Verify from directed ONLY graph
-        #         print(str(v) + ": " + str(neighbors_of_actual_node))
-        #         for n in neighbors_of_actual_node:
-        #             if auxGraph.nodes[n]['visited'] == False:
-        #                 # SupportGraph.nodes[n]['visited'] = True
-        #                 AntGraph.add_edge(v, n)
-
-        # long_ant = nx.dag_longest_path(AntGraph)
-        # print(long_ant)
-        # a = 0
-        # for l in long_ant:
-        #     print(l)
-        #     a += MainGraph.nodes[l]['makespan']
-
-        # print(a)
+        print(ants_solution[a])
 
         # After ONE ant visit the graph, reset the visited nodes in graph G
         for node_label, visited in MainGraph.nodes(data="visited"):
@@ -287,15 +287,12 @@ for cycle in range(cycles):
 
 
 # print(min(ants_solution))
-
 # print(MainGraph.nodes())
 # print(MainGraph.edges())
-plt.subplot(221)
-nx.draw_circular(MainGraph, with_labels=True)
-plt.subplot(222)
-nx.draw_circular(SupportGraph, with_labels=True)
-plt.subplot(223)
-nx.draw_circular(DirectedGraph, with_labels=True)
-# plt.subplot(224)
-# nx.draw_circular(AntGraph, with_labels=True)
-plt.show()
+# plt.subplot(221)
+# nx.draw_circular(MainGraph, with_labels=True)
+# plt.subplot(222)
+# nx.draw_circular(SupportGraph, with_labels=True)
+# plt.subplot(223)
+# nx.draw_circular(DirectedGraph, with_labels=True)
+# plt.show()

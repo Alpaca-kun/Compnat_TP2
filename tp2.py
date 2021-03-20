@@ -2,6 +2,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import math
 import random
+import statistics
 
 # Global constants
 alpha = 0.8
@@ -219,8 +220,7 @@ for cycle in range(cycles):
             S[u][v]['weight'] = G[u][v]['weight']
 
 
-# print(min(ants_solution))
-print(ants_solution)
+print(min(ants_solution))
 
 # G['0_0']['1_1']['weight'] = 100
 # print(G['0_0']['0_1']['weight']) # Start, end, weight between start and end
