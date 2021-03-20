@@ -252,7 +252,7 @@ for cycle in range(cycles):
             label = str(n) + "_" + str(machine + 1)
             ants_solution[a] += SupportGraph.nodes[label]['makespan']
 
-        print(ants_solution[a])
+        # print(ants_solution[a])
 
         # After ONE ant visit the graph, reset the visited nodes in graph G
         for node_label, visited in MainGraph.nodes(data="visited"):
@@ -285,6 +285,8 @@ for cycle in range(cycles):
             # SupportGraph[u][v]['weight'] = 0.0
             SupportGraph[u][v]['weight'] = MainGraph[u][v]['weight']
 
+print("O makespan obtido pela formiga e: " + str(min(ants_solution)))
+print(ants_solution)
 
 # print(min(ants_solution))
 # print(MainGraph.nodes())
